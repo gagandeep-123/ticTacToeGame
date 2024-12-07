@@ -1,52 +1,69 @@
 import React, { useState } from "react";
-
+import "./App.css";
 
 const App = () => {
+  // State to manage the grid size (n x n)
   const [gridSize, setGridSize] = useState(3);
+
+  // State to manage the win streak (m)
   const [winStreak, setWinStreak] = useState(3);
+
+  // State to represent the game board
   const [board, setBoard] = useState([]);
+
+  // State to track the current player (either "X" or "O")
   const [currentPlayer, setCurrentPlayer] = useState("X");
+
+  // State to track the winner of the game
   const [winner, setWinner] = useState(null);
+
+  // State to track whether the game has started
   const [gameStarted, setGameStarted] = useState(false);
 
+  // Function to initialize the board with an empty grid
   const initializeBoard = () => {
-    setBoard(
-      Array(gridSize)
-        .fill()
-        .map(() => Array(gridSize).fill(""))
-    );
-    setWinner(null);
-    setCurrentPlayer("X");
-    setGameStarted(true);
+    // Create a 2D array of size gridSize x gridSize filled with empty strings
+    setBoard(Array(gridSize).fill(Array(gridSize).fill("")));
+    setWinner(null); // Reset the winner
+    setCurrentPlayer("X"); // Start with player "X"
+    setGameStarted(true); // Mark the game as started
   };
 
+  // Function to handle cell clicks during the game
   const handleCellClick = (row, col) => {
+    // If the cell is already occupied or the game has a winner, do nothing
     if (board[row][col] !== "" || winner) return;
 
+    // Update the board with the current player's move
     const updatedBoard = board.map((r, i) =>
       r.map((cell, j) => (i === row && j === col ? currentPlayer : cell))
     );
 
-    setBoard(updatedBoard);
-    checkWinner(updatedBoard, row, col, currentPlayer);
-    setCurrentPlayer((prev) => (prev === "X" ? "O" : "X"));
+    setBoard(updatedBoard); // Update the board state
+    checkWinner(updatedBoard, row, col, currentPlayer); // Check if there's a winner
+    setCurrentPlayer((prev) => (prev === "X" ? "O" : "X")); // Switch the player
   };
 
+  // Function to check for a winner or a draw
   const checkWinner = (board, row, col, player) => {
+    // Define the directions to check: horizontal, vertical, diagonal, and anti-diagonal
     const directions = [
-      [0, 1],
-      [1, 0],
-      [1, 1],
-      [1, -1],
+      [0, 1], // Horizontal
+      [1, 0], // Vertical
+      [1, 1], // Diagonal \
+      [1, -1], // Anti-diagonal /
     ];
 
+    // Loop through each direction
     for (let [dx, dy] of directions) {
-      let count = 1;
+      let count = 1; // Start with the current cell as part of the streak
 
+      // Check in both directions for a streak
       for (let dir of [-1, 1]) {
-        let x = row + dir * dx;
-        let y = col + dir * dy;
+        let x = row + dir * dx; // Move along the row
+        let y = col + dir * dy; // Move along the column
 
+        // While within bounds and cells match the player's mark
         while (
           x >= 0 &&
           y >= 0 &&
@@ -54,99 +71,95 @@ const App = () => {
           y < gridSize &&
           board[x][y] === player
         ) {
-          count++;
+          count++; // Increment the streak count
           if (count >= winStreak) {
-            setWinner(player);
+            setWinner(player); // Set the winner if the streak matches the win condition
             return;
           }
-          x += dir * dx;
+          x += dir * dx; // Continue in the same direction
           y += dir * dy;
         }
       }
     }
 
+    // Check for a draw (no empty cells left and no winner)
     if (board.flat().every((cell) => cell !== "")) {
       setWinner("Draw");
     }
   };
 
+  // Function to reset the game and go back to the settings screen
   const resetGame = () => {
-    setGameStarted(false);
-    setBoard([]);
-    setWinner(null);
+    setGameStarted(false); // Mark the game as not started
+    setBoard([]); // Clear the board
+    setWinner(null); // Clear the winner
   };
 
   return (
-    <div className="min-h-screen bg-gray-800 text-white flex flex-col items-center py-8">
-      <h1 className="text-4xl font-bold mb-6">Customizable Tic-Tac-Toe</h1>
-
+    <div className="App">
+      {/* Settings Screen (before the game starts) */}
       {!gameStarted && (
-        <div className="bg-gray-700 p-6 rounded-lg shadow-md w-full max-w-md">
-          <h2 className="text-2xl font-semibold mb-4">Game Settings</h2>
-          <div className="mb-4">
-            <label className="block mb-2">Grid Size (n x n):</label>
+        <div className="settings">
+          <h1>Customizable Tic-Tac-Toe</h1>
+          {/* Input for grid size */}
+          <label>
+            Grid Size (n x n):
             <input
               type="number"
               min="3"
               max="10"
               value={gridSize}
               onChange={(e) => setGridSize(Number(e.target.value))}
-              className="w-full p-2 bg-gray-800 border border-gray-600 rounded"
             />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-2">Win Streak (m):</label>
+          </label>
+          {/* Input for win streak */}
+          <label>
+            Win Streak (m):
             <input
               type="number"
               min="3"
               max={gridSize}
               value={winStreak}
               onChange={(e) => setWinStreak(Number(e.target.value))}
-              className="w-full p-2 bg-gray-800 border border-gray-600 rounded"
             />
-          </div>
-          <button
-            onClick={initializeBoard}
-            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
-          >
-            Start Game
-          </button>
+          </label>
+          {/* Button to start the game */}
+          <button onClick={initializeBoard}>Start Game</button>
         </div>
       )}
 
+      {/* Game Screen (after the game starts) */}
       {gameStarted && (
-        <div className="flex flex-col items-center w-full">
-          <h2 className="text-2xl mb-4">
+        <div className="game">
+          {/* Display current player or winner */}
+          <h2>
             {winner
               ? winner === "Draw"
                 ? "It's a Draw!"
                 : `Player ${winner} Wins!`
               : `Current Player: ${currentPlayer}`}
           </h2>
+          {/* Render the board */}
           <div
-            className={`grid gap-2`}
+            className="board"
             style={{
-              gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
+              gridTemplateColumns: `repeat(${gridSize}, 1fr)`, // Adjust grid columns dynamically
             }}
           >
             {board.map((row, i) =>
               row.map((cell, j) => (
-                <button
+                <div
                   key={`${i}-${j}`}
-                  className="bg-gray-700 hover:bg-gray-600 text-3xl font-bold h-16 w-16 flex items-center justify-center rounded"
+                  className="cell"
                   onClick={() => handleCellClick(i, j)}
                 >
-                  {cell}
-                </button>
+                  {cell} {/* Display the cell content */}
+                </div>
               ))
             )}
           </div>
-          <button
-            onClick={resetGame}
-            className="mt-4 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"
-          >
-            Reset Game
-          </button>
+          {/* Button to reset the game */}
+          <button onClick={resetGame}>Reset Game</button>
         </div>
       )}
     </div>
